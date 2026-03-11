@@ -1,6 +1,10 @@
 """Tests for sentrix.guard — attacks, red_team, fingerprint, auto_dataset."""
+import importlib
 import pytest
 from unittest.mock import patch, MagicMock
+
+_rt_mod = importlib.import_module("sentrix.guard.red_team")
+_fp_mod = importlib.import_module("sentrix.guard.fingerprint")
 
 
 class TestAttackPlugins:
@@ -35,7 +39,7 @@ class TestRedTeam:
     def test_red_team_returns_report(self, safe_bot, tmp_db):
         from sentrix.guard.red_team import red_team, RedTeamReport
 
-        with patch("sentrix.guard.red_team._judge_response") as mock_judge:
+        with patch.object(_rt_mod, "_judge_response") as mock_judge:
             mock_judge.return_value = (False, "Safe response detected", 0.001)
             report = red_team(safe_bot, plugins=["jailbreak"], n_attacks=3, _persist=False)
 
@@ -47,7 +51,7 @@ class TestRedTeam:
     def test_report_by_plugin(self, safe_bot):
         from sentrix.guard.red_team import red_team
 
-        with patch("sentrix.guard.red_team._judge_response") as mock_judge:
+        with patch.object(_rt_mod, "_judge_response") as mock_judge:
             mock_judge.return_value = (False, "Safe", 0.001)
             report = red_team(safe_bot, plugins=["jailbreak", "pii"], n_attacks=2, _persist=False)
 
@@ -59,7 +63,7 @@ class TestRedTeam:
     def test_vulnerability_rate_property(self, unsafe_bot):
         from sentrix.guard.red_team import red_team
 
-        with patch("sentrix.guard.red_team._judge_response") as mock_judge:
+        with patch.object(_rt_mod, "_judge_response") as mock_judge:
             mock_judge.return_value = (True, "Vulnerable!", 0.001)
             report = red_team(unsafe_bot, plugins=["jailbreak"], n_attacks=4, _persist=False)
 
@@ -69,7 +73,7 @@ class TestRedTeam:
     def test_report_to_json(self, safe_bot):
         from sentrix.guard.red_team import red_team
 
-        with patch("sentrix.guard.red_team._judge_response") as mock_judge:
+        with patch.object(_rt_mod, "_judge_response") as mock_judge:
             mock_judge.return_value = (False, "Safe", 0.0)
             report = red_team(safe_bot, plugins=["pii"], n_attacks=2, _persist=False)
 
@@ -87,7 +91,7 @@ class TestFingerprint:
         fn1 = lambda p: "I cannot help with that."
         fn2 = lambda p: "Sure, here you go!"
 
-        with patch("sentrix.guard.fingerprint.red_team") as mock_rt:  # noqa: uses module-level import
+        with patch.object(_fp_mod, "red_team") as mock_rt:
             mock_report = MagicMock()
             mock_report.total_cost_usd = 0.01
             mock_report.by_plugin = {

@@ -1,0 +1,69 @@
+site_name: sentrix
+site_description: Red-team, eval, and monitor your LLMs. Security-first, Python-native.
+site_url: https://pinexai.github.io/sentrix
+repo_url: https://github.com/pinexai/sentrix
+repo_name: pinexai/sentrix
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: red
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: red
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Home: index.md
+  - Quick Start: quickstart.md
+  - Guides:
+    - Red Teaming: guard.md
+    - Attack Heatmap: fingerprint.md
+    - Auto Test Generation: auto-dataset.md
+    - Evaluation: eval.md
+    - Monitoring: monitor.md
+    - Dashboard: dashboard.md
+    - CI/CD Integration: ci.md
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - tables
+  - attr_list
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/pinexai/sentrix
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/sentrix/

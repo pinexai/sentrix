@@ -1,0 +1,1 @@
+"""sentrix.server — FastAPI dashboard."""

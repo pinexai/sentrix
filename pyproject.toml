@@ -1,0 +1,55 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sentrix"
+version = "0.1.0"
+description = "Red-team, eval, and monitor your LLMs. Security-first, Python-native."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+keywords = ["llm", "security", "red-team", "eval", "observability", "ai", "jailbreak", "safety"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Security",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = []
+
+[project.optional-dependencies]
+server  = ["fastapi>=0.100", "uvicorn>=0.20", "websockets>=11.0"]
+eval    = ["jsonschema>=4.0"]
+full    = ["sentrix[server,eval]", "sentence-transformers>=2.0"]
+
+[project.scripts]
+sentrix = "sentrix.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/pinexai/sentrix"
+Documentation = "https://pinexai.github.io/sentrix"
+Repository = "https://github.com/pinexai/sentrix"
+Issues = "https://github.com/pinexai/sentrix/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["sentrix"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

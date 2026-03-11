@@ -36,6 +36,7 @@ nav:
   - Quick Start: quickstart.md
   - Guides:
     - Red Teaming: guard.md
+    - Agentic Security (v0.2): agentic-security.md
     - Attack Heatmap: fingerprint.md
     - Auto Test Generation: auto-dataset.md
     - Evaluation: eval.md

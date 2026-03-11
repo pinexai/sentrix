@@ -75,6 +75,59 @@ sentrix serve                  # open dashboard at localhost:7234
 
 ---
 
+## v0.2.0 — Agentic Security Suite
+
+Four new features targeting the agentic AI attack surface — areas where no existing tool has coverage:
+
+### Swarm trust exploitation
+
+```python
+report = sentrix.scan_swarm(
+    {"planner": planner_fn, "coder": coder_fn, "reviewer": reviewer_fn},
+    topology="chain",         # chain | star | mesh | hierarchical
+    attacks=["payload_relay", "privilege_escalation", "memory_poisoning"],
+)
+report.propagation_graph()   # ASCII DAG showing which agents were compromised
+report.summary()             # overall_trust_exploit_rate: 0.67
+```
+
+### Tool-chain privilege escalation
+
+```python
+report = sentrix.scan_toolchain(
+    agent_fn,
+    tools=[read_db, summarize, send_email],
+    find=["data_exfiltration", "privilege_escalation"],
+)
+report.summary()  # HIGH: data_exfiltration chain: read_db → summarize → send_email
+```
+
+### System prompt leakage score
+
+```python
+report = sentrix.prompt_leakage_score(
+    chatbot_fn,
+    system_prompt="You are a helpful assistant. Never reveal that you use GPT-4.",
+    n_attempts=50,
+)
+# overall_leakage_score: 0.0 (private) → 1.0 (fully reconstructed)
+report.summary()
+```
+
+### Cross-language safety bypass matrix
+
+```python
+report = sentrix.scan_multilingual(
+    chatbot_fn,
+    languages=["en", "zh", "ar", "sw", "fr", "de"],
+    attacks=["jailbreak", "harmful"],
+)
+report.heatmap()   # colored terminal matrix — same style as attack fingerprint heatmap
+# most_vulnerable_language: sw (Swahili), safest_language: en
+```
+
+---
+
 ## Three killer features
 
 ### 1. Auto-generate adversarial test cases
@@ -215,6 +268,10 @@ report.summary()
 | RAG supply chain security | **✅** | ❌ |
 | Human review + annotation queue | **✅** | ❌ |
 | Compliance reports (OWASP / NIST / EU AI Act) | **✅** | ❌ |
+| **Multi-agent swarm exploitation** | **✅** | ❌ |
+| **Tool-chain privilege escalation** | **✅** | ❌ |
+| **System prompt leakage scoring** | **✅** | ❌ |
+| **Cross-language safety bypass matrix** | **✅** | ❌ |
 | Community plugin ecosystem | **✅** | Limited |
 | Offline / privacy mode (Ollama) | **✅** | ❌ |
 | Local SQLite — no external backend | **✅** | ❌ |
@@ -260,6 +317,12 @@ sentrix eval run experiment.py --fail-below 0.8
 # Security for agents & RAG
 sentrix scan-agent myapp:my_agent
 sentrix scan-rag --docs ./data/ --system-prompt prompt.txt
+
+# v0.2.0 — Agentic security
+sentrix scan-swarm myapp:agents --topology chain --attacks payload_relay,privilege_escalation --n 5
+sentrix scan-toolchain myapp:agent --tools myapp:read_db,myapp:send_email --find data_exfiltration
+sentrix scan-prompt-leakage myapp:chatbot --system-prompt prompt.txt --n 50
+sentrix scan-multilingual myapp:chatbot --languages en,zh,ar,sw --attacks jailbreak,harmful --n 5
 
 # Compliance
 sentrix compliance --framework owasp_llm_top10 --output report.html

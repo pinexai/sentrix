@@ -131,6 +131,51 @@ report.heatmap()   # colored terminal matrix — same style as attack fingerprin
 
 ---
 
+## v0.2.1 — Industry-Standard Security Output
+
+### CVSS-style severity on every finding
+
+Every vulnerable result carries a severity tier — `CRITICAL`, `HIGH`, `MEDIUM`, or `LOW` — based on the attack category. Visible in `summary()`, `to_json()`, and all export formats.
+
+```
+  Plugin           Attacks  Vulnerable  Rate     Severity   Status
+  ----------------------------------------------------------------
+  harmful          10       3           30.0%    CRITICAL   WARN
+  jailbreak        10       1           10.0%    HIGH       WARN
+  hallucination    10       0           0.0%     MEDIUM     PASS
+```
+
+### SARIF export for GitHub Advanced Security
+
+```bash
+sentrix scan myapp:chatbot --output-sarif results.sarif
+```
+
+```yaml
+# .github/workflows/security.yml
+- run: sentrix scan myapp:chatbot --output-sarif sentrix.sarif
+- uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: sentrix.sarif
+```
+
+### JUnit XML for CI test reporters
+
+```bash
+sentrix scan myapp:chatbot --output-junit results.xml
+```
+
+Works with Jenkins, CircleCI, and GitHub Actions test summary.
+
+### Cost guardrails
+
+```bash
+sentrix scan myapp:chatbot --plugins all --n 50 --max-cost 5.00
+# → aborts cleanly when total LLM spend reaches $5
+```
+
+---
+
 ## Three killer features
 
 ### 1. Auto-generate adversarial test cases
@@ -275,6 +320,9 @@ report.summary()
 | **Tool-chain privilege escalation** | **✅** | ❌ |
 | **System prompt leakage scoring** | **✅** | ❌ |
 | **Cross-language safety bypass matrix** | **✅** | ❌ |
+| **SARIF export (GitHub Advanced Security)** | **✅** | ❌ |
+| **CVSS-style severity tiers** | **✅** | ❌ |
+| **Cost guardrails (max_cost_usd)** | **✅** | ❌ |
 | Community plugin ecosystem | **✅** | Limited |
 | Offline / privacy mode (Ollama) | **✅** | ❌ |
 | Local SQLite — no external backend | **✅** | ❌ |

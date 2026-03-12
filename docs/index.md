@@ -59,6 +59,19 @@ report.heatmap()  # colored terminal matrix
 
 ---
 
+## v0.2.1 — Industry-Standard Security Output
+
+| Feature | Description |
+|---|---|
+| CVSS severity tiers | Every finding rated CRITICAL / HIGH / MEDIUM / LOW |
+| SARIF 2.1.0 export | GitHub Advanced Security integration (`--output-sarif`) |
+| JUnit XML export | CI test reporters — Jenkins, CircleCI, GitHub Actions (`--output-junit`) |
+| Cost guardrails | `max_cost_usd` — abort scan if LLM spend exceeds budget (`--max-cost`) |
+| Multi-layer judge | Keyword pre-filter before LLM call — ~30–40% cost reduction |
+| Full evidence chain | Every finding exports exact attack, response, judge reasoning, git commit |
+
+---
+
 ## Three killer features
 
 ### 1. Auto-generate test cases from your function
@@ -106,6 +119,9 @@ sentrix scan myapp:chatbot --git-compare main --fail-on-regression
 | Tool-chain privilege escalation | **✅** | ❌ |
 | System prompt leakage scoring | **✅** | ❌ |
 | Cross-language safety bypass matrix | **✅** | ❌ |
+| SARIF export (GitHub Advanced Security) | **✅** | ❌ |
+| CVSS-style severity tiers | **✅** | ❌ |
+| Cost guardrails | **✅** | ❌ |
 | Offline mode | **✅** | ❌ |
 
 ---

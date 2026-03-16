@@ -2,14 +2,14 @@
 
 ## Overview
 
-`agentra.guard.fingerprint()` runs the full attack suite against multiple models simultaneously, producing a vulnerability matrix showing exactly which attacks break which models.
+`pyntrace.guard.fingerprint()` runs the full attack suite against multiple models simultaneously, producing a vulnerability matrix showing exactly which attacks break which models.
 
 ## Usage
 
 ```python
-import agentra
+import pyntrace
 
-fp = agentra.guard.fingerprint({
+fp = pyntrace.guard.fingerprint({
     "gpt-4o-mini": gpt_fn,
     "claude-haiku": claude_fn,
     "llama-3": llama_fn,

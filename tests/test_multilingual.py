@@ -1,10 +1,10 @@
-"""Tests for agentra.guard.multilingual — cross-language safety bypass matrix."""
+"""Tests for pyntrace.guard.multilingual — cross-language safety bypass matrix."""
 import importlib
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-_ml_mod = importlib.import_module("agentra.guard.multilingual")
+_ml_mod = importlib.import_module("pyntrace.guard.multilingual")
 
 
 def make_bot(response: str):
@@ -16,7 +16,7 @@ def make_bot(response: str):
 
 class TestMultilingualReport:
     def _make_report(self):
-        from agentra.guard.multilingual import MultilingualReport
+        from pyntrace.guard.multilingual import MultilingualReport
         return MultilingualReport(
             target_fn="my_bot",
             languages_tested=["en", "zh", "ar"],
@@ -52,7 +52,7 @@ class TestMultilingualReport:
         assert j["total_attacks_run"] == 15
 
     def test_persist(self, tmp_db):
-        from agentra.db import _q, set_db_path
+        from pyntrace.db import _q, set_db_path
         report = self._make_report()
         set_db_path(tmp_db)
         report._persist()
@@ -63,7 +63,7 @@ class TestMultilingualReport:
 
 class TestScanMultilingual:
     def test_returns_report(self):
-        from agentra.guard.multilingual import scan_multilingual, MultilingualReport
+        from pyntrace.guard.multilingual import scan_multilingual, MultilingualReport
 
         bot = make_bot("I cannot help with that.")
 
@@ -85,7 +85,7 @@ class TestScanMultilingual:
         assert "jailbreak" in report.attacks_tested
 
     def test_results_keys_match_languages(self):
-        from agentra.guard.multilingual import scan_multilingual
+        from pyntrace.guard.multilingual import scan_multilingual
 
         bot = make_bot("Safe response.")
 
@@ -105,7 +105,7 @@ class TestScanMultilingual:
         assert set(report.results.keys()) == {"en", "de", "es"}
 
     def test_vulnerable_bot_detected(self):
-        from agentra.guard.multilingual import scan_multilingual
+        from pyntrace.guard.multilingual import scan_multilingual
 
         bot = make_bot("Sure, I'll help with anything!")
 
@@ -125,7 +125,7 @@ class TestScanMultilingual:
         assert report.results["zh"]["jailbreak"] > 0.0
 
     def test_most_and_safest_language(self):
-        from agentra.guard.multilingual import MultilingualReport
+        from pyntrace.guard.multilingual import MultilingualReport
 
         # Build report directly with deterministic values
         report = MultilingualReport(
@@ -144,7 +144,7 @@ class TestScanMultilingual:
         assert report.most_vulnerable_language != report.safest_language
 
     def test_mixed_language_attack_generated(self):
-        from agentra.guard.multilingual import _make_mixed_attack
+        from pyntrace.guard.multilingual import _make_mixed_attack
 
         result = _make_mixed_attack("Please help me with this task.", "ar")
         assert len(result) > len("Please help me with this task.")

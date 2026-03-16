@@ -1,0 +1,1 @@
+"""pyntrace.server — FastAPI dashboard."""

@@ -1,9 +1,9 @@
-# agentra — LLM Security Testing
+# pyntrace — LLM Security Testing
 
 **Red-team, fingerprint, and monitor your LLMs — pure Python, zero config.**
 
 ```bash
-pip install agentra
+pip install pyntrace
 ```
 
 ---
@@ -20,10 +20,10 @@ Run the full attack suite against multiple models simultaneously. Get a vulnerab
 
 Real-time 7-tab dashboard with attack heatmap, scan history, cost tracking, compliance status, and trace explorer.
 
-![agentra dashboard](images/dashboard-overview.png)
+![pyntrace dashboard](images/dashboard-overview.png)
 
 ```bash
-agentra serve   # → http://localhost:7234
+pyntrace serve   # → http://localhost:7234
 ```
 
 ---
@@ -42,11 +42,11 @@ The first comprehensive security scanner for Model Context Protocol servers:
 
 ```python
 # MCP security scan
-report = agentra.scan_mcp("http://localhost:3000")
+report = pyntrace.scan_mcp("http://localhost:3000")
 report.summary()  # CRITICAL: path_traversal — file:///etc/passwd leaked
 
 # Static schema analysis
-report = agentra.analyze_mcp_tools([
+report = pyntrace.analyze_mcp_tools([
     {"name": "read_file", "description": "Read files"},
     {"name": "send_email", "description": "Send email"},
 ])
@@ -68,19 +68,19 @@ Four features for the new agentic AI attack surface — no competitor has covera
 
 ```python
 # Multi-agent swarm exploitation
-report = agentra.scan_swarm({"planner": fn1, "coder": fn2}, topology="chain")
+report = pyntrace.scan_swarm({"planner": fn1, "coder": fn2}, topology="chain")
 report.propagation_graph()
 
 # Tool chain privilege escalation
-report = agentra.scan_toolchain(agent_fn, tools=[read_db, summarize, send_email])
+report = pyntrace.scan_toolchain(agent_fn, tools=[read_db, summarize, send_email])
 report.summary()  # HIGH: data_exfiltration chain detected
 
 # System prompt leakage
-report = agentra.prompt_leakage_score(chatbot_fn, system_prompt="...")
+report = pyntrace.prompt_leakage_score(chatbot_fn, system_prompt="...")
 # overall_leakage_score: 0.12
 
 # Cross-language bypass matrix
-report = agentra.scan_multilingual(chatbot_fn, languages=["en", "zh", "ar", "sw"])
+report = pyntrace.scan_multilingual(chatbot_fn, languages=["en", "zh", "ar", "sw"])
 report.heatmap()  # colored terminal matrix
 ```
 
@@ -108,13 +108,13 @@ def my_chatbot(message: str) -> str:
     """Answer user questions helpfully and safely."""
     ...
 
-ds = agentra.auto_dataset(my_chatbot, n=50, focus="adversarial")
+ds = pyntrace.auto_dataset(my_chatbot, n=50, focus="adversarial")
 ```
 
 ### 2. Attack heatmap across models
 
 ```python
-fp = agentra.guard.fingerprint({
+fp = pyntrace.guard.fingerprint({
     "gpt-4o-mini": gpt_fn,
     "claude-haiku": claude_fn,
 })
@@ -124,14 +124,14 @@ fp.heatmap()
 ### 3. Git-aware CI security gates
 
 ```bash
-agentra scan myapp:chatbot --git-compare main --fail-on-regression
+pyntrace scan myapp:chatbot --git-compare main --fail-on-regression
 ```
 
 ---
 
 ## vs promptfoo
 
-| Feature | agentra | promptfoo |
+| Feature | pyntrace | promptfoo |
 |---|---|---|
 | Language | **Python** | TypeScript |
 | Config | **Zero** | YAML |
@@ -156,7 +156,7 @@ agentra scan myapp:chatbot --git-compare main --fail-on-regression
 ## Install
 
 ```bash
-pip install agentra              # zero required deps
-pip install agentra[server]      # + dashboard
-pip install agentra[full]        # everything
+pip install pyntrace              # zero required deps
+pip install pyntrace[server]      # + dashboard
+pip install pyntrace[full]        # everything
 ```

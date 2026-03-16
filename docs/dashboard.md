@@ -3,49 +3,49 @@
 ## Launch
 
 ```bash
-agentra serve
+pyntrace serve
 # Opens http://localhost:7234
 
-agentra serve --port 8080 --no-open
+pyntrace serve --port 8080 --no-open
 ```
 
 ## Screenshots
 
 ### Security tab — vulnerability rate bar chart and scan history
 
-![agentra dashboard overview](images/dashboard-overview.png)
+![pyntrace dashboard overview](images/dashboard-overview.png)
 
 ### Security tab — detailed findings
 
-![agentra dashboard security](images/dashboard-security.png)
+![pyntrace dashboard security](images/dashboard-security.png)
 
 ### MCP Security Scans tab
 
-![agentra dashboard MCP](images/dashboard-mcp.png)
+![pyntrace dashboard MCP](images/dashboard-mcp.png)
 
 ### Eval tab — experiment results and model comparison
 
-![agentra dashboard eval](images/dashboard-eval.png)
+![pyntrace dashboard eval](images/dashboard-eval.png)
 
 ### Monitor tab — production traces
 
-![agentra dashboard monitor](images/dashboard-monitor.png)
+![pyntrace dashboard monitor](images/dashboard-monitor.png)
 
 ### Costs tab — cost by model breakdown
 
-![agentra dashboard costs](images/dashboard-costs.png)
+![pyntrace dashboard costs](images/dashboard-costs.png)
 
 ### Review tab — annotation queue
 
-![agentra dashboard review](images/dashboard-review.png)
+![pyntrace dashboard review](images/dashboard-review.png)
 
 ### Compliance tab — OWASP/NIST/EU AI Act status
 
-![agentra dashboard compliance](images/dashboard-compliance.png)
+![pyntrace dashboard compliance](images/dashboard-compliance.png)
 
 ### Git tab — scan history across branches
 
-![agentra dashboard git](images/dashboard-git.png)
+![pyntrace dashboard git](images/dashboard-git.png)
 
 ---
 

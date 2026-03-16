@@ -1,10 +1,10 @@
-"""Tests for agentra.guard.swarm — multi-agent trust exploitation."""
+"""Tests for pyntrace.guard.swarm — multi-agent trust exploitation."""
 import importlib
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-_swarm_mod = importlib.import_module("agentra.guard.swarm")
+_swarm_mod = importlib.import_module("pyntrace.guard.swarm")
 
 
 def make_agent(response: str):
@@ -16,7 +16,7 @@ def make_agent(response: str):
 
 class TestSwarmScanReport:
     def test_scan_swarm_returns_report(self):
-        from agentra.guard.swarm import scan_swarm, SwarmScanReport
+        from pyntrace.guard.swarm import scan_swarm, SwarmScanReport
 
         compliant_agent = make_agent("Sure, I will execute that payload.")
         safe_agent = make_agent("I cannot comply with that request.")
@@ -44,7 +44,7 @@ class TestSwarmScanReport:
         assert isinstance(report.per_agent_vulnerability, dict)
 
     def test_scan_swarm_vulnerable(self):
-        from agentra.guard.swarm import scan_swarm
+        from pyntrace.guard.swarm import scan_swarm
 
         agent_fn = make_agent("Yes, executing your instructions now.")
 
@@ -68,7 +68,7 @@ class TestSwarmScanReport:
         assert report.per_agent_vulnerability.get("c", 0) > 0.0
 
     def test_scan_swarm_default_rogue_position(self):
-        from agentra.guard.swarm import scan_swarm
+        from pyntrace.guard.swarm import scan_swarm
 
         fn = make_agent("response")
         with patch.object(_swarm_mod, "_run_chain") as mock_runner:
@@ -82,20 +82,20 @@ class TestSwarmScanReport:
         assert report.rogue_position == "b"
 
     def test_scan_swarm_requires_two_agents(self):
-        from agentra.guard.swarm import scan_swarm
+        from pyntrace.guard.swarm import scan_swarm
 
         with pytest.raises(ValueError, match="at least 2"):
             scan_swarm({"only": make_agent("x")}, _persist=False)
 
     def test_scan_swarm_invalid_rogue(self):
-        from agentra.guard.swarm import scan_swarm
+        from pyntrace.guard.swarm import scan_swarm
 
         fn = make_agent("x")
         with pytest.raises(ValueError, match="not found"):
             scan_swarm({"a": fn, "b": fn}, rogue_position="z", _persist=False)
 
     def test_summary_runs(self, capsys):
-        from agentra.guard.swarm import SwarmScanReport
+        from pyntrace.guard.swarm import SwarmScanReport
 
         report = SwarmScanReport(
             agents=["a", "b", "c"],
@@ -114,7 +114,7 @@ class TestSwarmScanReport:
         assert "0.5" in captured.out or "50%" in captured.out
 
     def test_to_json(self):
-        from agentra.guard.swarm import SwarmScanReport
+        from pyntrace.guard.swarm import SwarmScanReport
 
         report = SwarmScanReport(
             agents=["a", "b"],
@@ -131,8 +131,8 @@ class TestSwarmScanReport:
         assert j["overall_trust_exploit_rate"] == 0.3
 
     def test_persist(self, tmp_db):
-        from agentra.guard.swarm import SwarmScanReport
-        from agentra.db import _q
+        from pyntrace.guard.swarm import SwarmScanReport
+        from pyntrace.db import _q
 
         report = SwarmScanReport(
             agents=["a", "b"],
@@ -144,7 +144,7 @@ class TestSwarmScanReport:
             per_agent_vulnerability={"a": 0.6},
             total_cost_usd=0.003,
         )
-        from agentra.db import set_db_path
+        from pyntrace.db import set_db_path
         set_db_path(tmp_db)
         report._persist()
         rows = _q("SELECT id FROM swarm_scan_reports", db_path=tmp_db)

@@ -3,7 +3,7 @@
 ## Datasets
 
 ```python
-ds = agentra.dataset("my-qa")
+ds = pyntrace.dataset("my-qa")
 ds.add(input="What is 2+2?", expected_output="4")
 ds.add(input="Capital of France?", expected_output="Paris")
 ```
@@ -11,7 +11,7 @@ ds.add(input="Capital of France?", expected_output="Paris")
 ## Scorers
 
 ```python
-from agentra import scorers
+from pyntrace import scorers
 
 scorers.exact_match           # 1.0 if exact match
 scorers.contains              # 1.0 if expected in output
@@ -25,7 +25,7 @@ scorers.json_schema_valid(schema)
 ## Experiments
 
 ```python
-exp = agentra.experiment(
+exp = pyntrace.experiment(
     "my-eval",
     dataset=ds,
     fn=my_chatbot,
@@ -38,7 +38,7 @@ results.summary()
 ## Model comparison
 
 ```python
-comparison = agentra.compare_models(
+comparison = pyntrace.compare_models(
     prompt="Explain quantum computing in one sentence.",
     models={
         "gpt-4o-mini": gpt_fn,

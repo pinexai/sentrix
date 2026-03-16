@@ -1,8 +1,8 @@
-site_name: agentra
+site_name: pyntrace
 site_description: Red-team, eval, and monitor your LLMs. Security-first, Python-native.
-site_url: https://pinexai.github.io/agentra
-repo_url: https://github.com/pinexai/agentra
-repo_name: pinexai/agentra
+site_url: https://pinexai.github.io/pyntrace
+repo_url: https://github.com/pinexai/pyntrace
+repo_name: pinexai/pyntrace
 
 theme:
   name: material
@@ -66,6 +66,6 @@ markdown_extensions:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/pinexai/agentra
+      link: https://github.com/pinexai/pyntrace
     - icon: fontawesome/brands/python
-      link: https://pypi.org/project/agentra/
+      link: https://pypi.org/project/pyntrace/

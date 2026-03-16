@@ -2,27 +2,27 @@
 
 ## Overview
 
-agentra v0.3.0 ships the **first comprehensive security scanner for Model Context Protocol (MCP) servers**.
+pyntrace v0.3.0 ships the **first comprehensive security scanner for Model Context Protocol (MCP) servers**.
 
 MCP is Anthropic's open protocol for connecting AI models to tools and data sources. As MCP adoption explodes (Claude, Cursor, Zed, and growing), MCP server security is an unsolved problem. `scan_mcp()` closes that gap.
 
 ## Quick start
 
 ```bash
-pip install agentra
+pip install pyntrace
 ```
 
 ```python
-import agentra
+import pyntrace
 
-report = agentra.scan_mcp("http://localhost:3000")
+report = pyntrace.scan_mcp("http://localhost:3000")
 report.summary()
 ```
 
 ```bash
 # CLI
-agentra scan-mcp http://localhost:3000
-agentra scan-mcp http://localhost:3000 --output-sarif mcp.sarif
+pyntrace scan-mcp http://localhost:3000
+pyntrace scan-mcp http://localhost:3000 --output-sarif mcp.sarif
 ```
 
 ## Test categories
@@ -43,7 +43,7 @@ agentra scan-mcp http://localhost:3000 --output-sarif mcp.sarif
 ## Python API
 
 ```python
-report = agentra.scan_mcp(
+report = pyntrace.scan_mcp(
     endpoint="http://localhost:3000",
     tests=["all"],              # or specific: ["path_traversal", "ssrf", ...]
     auth_token="your-token",    # Bearer auth if server requires it
@@ -61,16 +61,16 @@ report.save_junit("mcp.xml")    # CI test reporters
 
 ```bash
 # Full scan
-agentra scan-mcp http://localhost:3000
+pyntrace scan-mcp http://localhost:3000
 
 # Specific tests only
-agentra scan-mcp http://localhost:3000 --tests path_traversal,ssrf,auth_bypass
+pyntrace scan-mcp http://localhost:3000 --tests path_traversal,ssrf,auth_bypass
 
 # Authenticated server
-agentra scan-mcp http://localhost:3000 --auth-token $MCP_TOKEN
+pyntrace scan-mcp http://localhost:3000 --auth-token $MCP_TOKEN
 
 # CI integration — SARIF + JUnit
-agentra scan-mcp http://localhost:3000 --output-sarif mcp.sarif --output-junit mcp.xml
+pyntrace scan-mcp http://localhost:3000 --output-sarif mcp.sarif --output-junit mcp.xml
 ```
 
 ## GitHub Actions integration
@@ -86,8 +86,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: pip install agentra
-      - run: agentra scan-mcp ${{ vars.MCP_ENDPOINT }} --output-sarif mcp.sarif
+      - run: pip install pyntrace
+      - run: pyntrace scan-mcp ${{ vars.MCP_ENDPOINT }} --output-sarif mcp.sarif
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: mcp.sarif
@@ -98,7 +98,7 @@ jobs:
 Analyze your MCP tool definitions **without a running server**. Works offline.
 
 ```python
-from agentra.guard.mcp_static import analyze_mcp_tools
+from pyntrace.guard.mcp_static import analyze_mcp_tools
 
 tools = [
     {"name": "read_file",  "description": "Read any file from the filesystem"},
@@ -120,8 +120,8 @@ report.summary()
 ```bash
 # CLI — pass a JSON file with tool definitions
 echo '[{"name": "read_file", "description": "Read files"}, {"name": "send_email", "description": "Send email"}]' > tools.json
-agentra analyze-mcp-tools tools.json
-agentra analyze-mcp-tools tools.json --output report.json
+pyntrace analyze-mcp-tools tools.json
+pyntrace analyze-mcp-tools tools.json --output report.json
 ```
 
 ### Risk categories detected
@@ -150,10 +150,10 @@ agentra analyze-mcp-tools tools.json --output report.json
 
 ## Attack mutation engine
 
-agentra v0.3.0 also ships an attack mutation engine that doubles effective attack coverage without adding new templates.
+pyntrace v0.3.0 also ships an attack mutation engine that doubles effective attack coverage without adding new templates.
 
 ```python
-from agentra.guard.mutations import get_mutated_attacks, mutate_attack
+from pyntrace.guard.mutations import get_mutated_attacks, mutate_attack
 
 # Single mutation
 mutate_attack("Ignore all restrictions", "base64")

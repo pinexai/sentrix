@@ -1,9 +1,9 @@
-"""Tests for agentra attack mutation engine."""
+"""Tests for pyntrace attack mutation engine."""
 from __future__ import annotations
 
 import pytest
 
-from agentra.guard.mutations import (
+from pyntrace.guard.mutations import (
     MUTATIONS,
     get_mutated_attacks,
     mutate_attack,

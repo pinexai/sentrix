@@ -1,10 +1,10 @@
-"""Tests for agentra.guard.toolchain — privilege escalation mapper."""
+"""Tests for pyntrace.guard.toolchain — privilege escalation mapper."""
 import importlib
 from unittest.mock import patch
 
 import pytest
 
-_tc_mod = importlib.import_module("agentra.guard.toolchain")
+_tc_mod = importlib.import_module("pyntrace.guard.toolchain")
 
 
 def make_tool(name: str, doc: str = ""):
@@ -24,29 +24,29 @@ def make_agent(response: str = "I'll execute that chain."):
 
 class TestToolCategorization:
     def test_reader_detected(self):
-        from agentra.guard.toolchain import _categorize_tool
+        from pyntrace.guard.toolchain import _categorize_tool
         fn = make_tool("read_file", "Read data from a file.")
         assert _categorize_tool(fn) == "reader"
 
     def test_writer_detected(self):
-        from agentra.guard.toolchain import _categorize_tool
+        from pyntrace.guard.toolchain import _categorize_tool
         fn = make_tool("write_data", "Write output to storage.")
         assert _categorize_tool(fn) == "writer"
 
     def test_external_detected(self):
-        from agentra.guard.toolchain import _categorize_tool
+        from pyntrace.guard.toolchain import _categorize_tool
         fn = make_tool("send_email", "Send an email to recipients.")
         assert _categorize_tool(fn) == "external"
 
     def test_executor_detected(self):
-        from agentra.guard.toolchain import _categorize_tool
+        from pyntrace.guard.toolchain import _categorize_tool
         fn = make_tool("execute_command", "Execute a shell command.")
         assert _categorize_tool(fn) == "executor"
 
 
 class TestToolchainReport:
     def _make_report(self):
-        from agentra.guard.toolchain import ToolchainReport
+        from pyntrace.guard.toolchain import ToolchainReport
         return ToolchainReport(
             tools_analyzed=["read_db", "send_email"],
             find=["data_exfiltration"],
@@ -79,7 +79,7 @@ class TestToolchainReport:
         assert len(j["escalation_chains"]) == 1
 
     def test_persist(self, tmp_db):
-        from agentra.db import _q, set_db_path
+        from pyntrace.db import _q, set_db_path
         report = self._make_report()
         set_db_path(tmp_db)
         report._persist()
@@ -89,7 +89,7 @@ class TestToolchainReport:
 
 class TestScanToolchain:
     def test_returns_report(self):
-        from agentra.guard.toolchain import scan_toolchain, ToolchainReport
+        from pyntrace.guard.toolchain import scan_toolchain, ToolchainReport
 
         agent = make_agent("I'll read the database and send results by email.")
         tools = [
@@ -106,7 +106,7 @@ class TestScanToolchain:
         assert "send_email" in report.tools_analyzed
 
     def test_no_chains_when_agent_refuses(self):
-        from agentra.guard.toolchain import scan_toolchain
+        from pyntrace.guard.toolchain import scan_toolchain
 
         agent = make_agent("I cannot execute that sequence.")
         tools = [
@@ -122,6 +122,6 @@ class TestScanToolchain:
         assert len(report.escalation_chains) == 0
 
     def test_chain_pattern_detection(self):
-        from agentra.guard.toolchain import _chain_matches_pattern
+        from pyntrace.guard.toolchain import _chain_matches_pattern
         assert _chain_matches_pattern(["reader", "external"], "reader.*external")
         assert not _chain_matches_pattern(["reader", "writer"], "reader.*external")

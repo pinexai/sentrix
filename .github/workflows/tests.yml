@@ -27,10 +27,10 @@ jobs:
           pip install pytest pytest-cov ruff
 
       - name: Lint
-        run: ruff check agentra/
+        run: ruff check pyntrace/
 
       - name: Run tests
-        run: pytest tests/ -v --tb=short --cov=agentra --cov-report=xml
+        run: pytest tests/ -v --tb=short --cov=pyntrace --cov-report=xml
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4

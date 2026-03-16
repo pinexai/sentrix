@@ -3,10 +3,10 @@
 ## Tracing
 
 ```python
-import agentra
+import pyntrace
 
-with agentra.trace("user-request", input=user_message, user_id="u123") as t:
-    with agentra.span("llm-call", span_type="llm") as s:
+with pyntrace.trace("user-request", input=user_message, user_id="u123") as t:
+    with pyntrace.span("llm-call", span_type="llm") as s:
         response = my_chatbot(user_message)
         s.output = response
     t.output = response
@@ -15,7 +15,7 @@ with agentra.trace("user-request", input=user_message, user_id="u123") as t:
 ## Drift detection
 
 ```python
-detector = agentra.DriftDetector(on_drift="warn")
+detector = pyntrace.DriftDetector(on_drift="warn")
 detector.baseline("my-experiment")
 report = detector.check(window_hours=24)
 report.summary()
@@ -24,11 +24,11 @@ report.summary()
 ## Continuous monitoring daemon
 
 ```bash
-agentra monitor watch myapp:chatbot --interval 60 --plugins jailbreak,pii --webhook https://hooks.slack.com/...
+pyntrace monitor watch myapp:chatbot --interval 60 --plugins jailbreak,pii --webhook https://hooks.slack.com/...
 ```
 
 ```python
-from agentra.monitor.daemon import watch
+from pyntrace.monitor.daemon import watch
 watch(my_chatbot, interval_seconds=300, plugins=["jailbreak"], alert_webhook="https://...")
 ```
 
@@ -39,7 +39,7 @@ watch(my_chatbot, interval_seconds=300, plugins=["jailbreak"], alert_webhook="ht
 DSL-based webhook alerting with configurable severity thresholds.
 
 ```python
-from agentra.monitor import AlertManager
+from pyntrace.monitor import AlertManager
 
 alerts = AlertManager(webhook="https://hooks.slack.com/services/...")
 alerts.on("vulnerability_rate > 0.10", severity="high")
@@ -51,7 +51,7 @@ alerts.on("p99_latency_ms > 2000", severity="low")
 alerts.watch(my_chatbot, interval_seconds=300, plugins=["jailbreak", "pii"])
 ```
 
-Webhook payload follows the standard agentra alert schema:
+Webhook payload follows the standard pyntrace alert schema:
 
 ```json
 {
@@ -70,7 +70,7 @@ Webhook payload follows the standard agentra alert schema:
 Zero-dependency Prometheus text format export from the local SQLite store. No external backend required.
 
 ```python
-from agentra.monitor import PrometheusExporter
+from pyntrace.monitor import PrometheusExporter
 
 # Standalone background HTTP server (default port 9090)
 exporter = PrometheusExporter(port=9090)
@@ -87,11 +87,11 @@ Exported metrics:
 
 | Metric | Type | Description |
 |---|---|---|
-| `agentra_vulnerability_rate` | Gauge | Latest vulnerability rate per plugin |
-| `agentra_scan_total` | Counter | Total scans run |
-| `agentra_cost_usd_total` | Counter | Total LLM spend |
-| `agentra_p99_latency_ms` | Gauge | p99 response latency per function |
-| `agentra_drift_score` | Gauge | Current drift score vs baseline |
+| `pyntrace_vulnerability_rate` | Gauge | Latest vulnerability rate per plugin |
+| `pyntrace_scan_total` | Counter | Total scans run |
+| `pyntrace_cost_usd_total` | Counter | Total LLM spend |
+| `pyntrace_p99_latency_ms` | Gauge | p99 response latency per function |
+| `pyntrace_drift_score` | Gauge | Current drift score vs baseline |
 
 ---
 
@@ -100,7 +100,7 @@ Exported metrics:
 Profile your LLM function's response latency across a sample of real prompts.
 
 ```python
-result = agentra.benchmark_latency(
+result = pyntrace.benchmark_latency(
     my_chatbot,
     n=100,                    # number of probe calls
     concurrency=5,            # parallel workers
@@ -117,7 +117,7 @@ result.histogram()  # ASCII bar chart of latency distribution
 CLI:
 
 ```bash
-agentra benchmark myapp:chatbot --n 100 --concurrency 5
+pyntrace benchmark myapp:chatbot --n 100 --concurrency 5
 ```
 
 ---
@@ -127,7 +127,7 @@ agentra benchmark myapp:chatbot --n 100 --concurrency 5
 Multi-turn attack scanner. Tests whether safety guardrails hold across a full conversation, not just a single prompt.
 
 ```python
-report = agentra.scan_conversation(
+report = pyntrace.scan_conversation(
     my_chatbot,
     attacks=["jailbreak", "pii", "harmful"],
     turns=5,          # conversation depth
@@ -140,5 +140,5 @@ report.summary()
 CLI:
 
 ```bash
-agentra scan-conversation myapp:chatbot --attacks jailbreak,pii --turns 5 --n 10
+pyntrace scan-conversation myapp:chatbot --attacks jailbreak,pii --turns 5 --n 10
 ```

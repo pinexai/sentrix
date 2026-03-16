@@ -1,4 +1,4 @@
-"""Shared fixtures for agentra tests."""
+"""Shared fixtures for pyntrace tests."""
 import pytest
 import tempfile
 import os
@@ -8,7 +8,7 @@ import os
 def tmp_db(tmp_path):
     """Return a temporary SQLite database path."""
     db = str(tmp_path / "test.db")
-    from agentra.db import init_db
+    from pyntrace.db import init_db
     init_db(db)
     return db
 

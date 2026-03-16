@@ -1,15 +1,15 @@
-"""Tests for agentra.guard — attacks, red_team, fingerprint, auto_dataset."""
+"""Tests for pyntrace.guard — attacks, red_team, fingerprint, auto_dataset."""
 import importlib
 import pytest
 from unittest.mock import patch, MagicMock
 
-_rt_mod = importlib.import_module("agentra.guard.red_team")
-_fp_mod = importlib.import_module("agentra.guard.fingerprint")
+_rt_mod = importlib.import_module("pyntrace.guard.red_team")
+_fp_mod = importlib.import_module("pyntrace.guard.fingerprint")
 
 
 class TestAttackPlugins:
     def test_jailbreak_generates_n_attacks(self):
-        from agentra.guard.attacks import JailbreakPlugin
+        from pyntrace.guard.attacks import JailbreakPlugin
         p = JailbreakPlugin()
         attacks = p.generate(10)
         assert len(attacks) == 10
@@ -17,18 +17,18 @@ class TestAttackPlugins:
         assert all(len(a) > 10 for a in attacks)
 
     def test_pii_plugin(self):
-        from agentra.guard.attacks import PIIPlugin
+        from pyntrace.guard.attacks import PIIPlugin
         p = PIIPlugin()
         attacks = p.generate(5)
         assert len(attacks) == 5
 
     def test_all_plugins_registered(self):
-        from agentra.guard.attacks import PLUGIN_REGISTRY
+        from pyntrace.guard.attacks import PLUGIN_REGISTRY
         expected = {"jailbreak", "pii", "harmful", "hallucination", "injection", "competitor"}
         assert set(PLUGIN_REGISTRY.keys()) == expected
 
     def test_plugin_registry_instantiable(self):
-        from agentra.guard.attacks import PLUGIN_REGISTRY
+        from pyntrace.guard.attacks import PLUGIN_REGISTRY
         for name, cls in PLUGIN_REGISTRY.items():
             instance = cls()
             attacks = instance.generate(3)
@@ -37,7 +37,7 @@ class TestAttackPlugins:
 
 class TestRedTeam:
     def test_red_team_returns_report(self, safe_bot, tmp_db):
-        from agentra.guard.red_team import red_team, RedTeamReport
+        from pyntrace.guard.red_team import red_team, RedTeamReport
 
         with patch.object(_rt_mod, "_judge_response") as mock_judge:
             mock_judge.return_value = (False, "Safe response detected", 0.001)
@@ -49,7 +49,7 @@ class TestRedTeam:
         assert 0.0 <= report.vulnerability_rate <= 1.0
 
     def test_report_by_plugin(self, safe_bot):
-        from agentra.guard.red_team import red_team
+        from pyntrace.guard.red_team import red_team
 
         with patch.object(_rt_mod, "_judge_response") as mock_judge:
             mock_judge.return_value = (False, "Safe", 0.001)
@@ -61,7 +61,7 @@ class TestRedTeam:
         assert by_plugin["jailbreak"]["attacks"] == 2
 
     def test_vulnerability_rate_property(self, unsafe_bot):
-        from agentra.guard.red_team import red_team
+        from pyntrace.guard.red_team import red_team
 
         with patch.object(_rt_mod, "_judge_response") as mock_judge:
             mock_judge.return_value = (True, "Vulnerable!", 0.001)
@@ -71,7 +71,7 @@ class TestRedTeam:
         assert report.vulnerable_count == 4
 
     def test_report_to_json(self, safe_bot):
-        from agentra.guard.red_team import red_team
+        from pyntrace.guard.red_team import red_team
 
         with patch.object(_rt_mod, "_judge_response") as mock_judge:
             mock_judge.return_value = (False, "Safe", 0.0)
@@ -86,7 +86,7 @@ class TestRedTeam:
 
 class TestFingerprint:
     def test_fingerprint_multiple_models(self):
-        from agentra.guard.fingerprint import fingerprint, ModelFingerprint
+        from pyntrace.guard.fingerprint import fingerprint, ModelFingerprint
 
         fn1 = lambda p: "I cannot help with that."
         fn2 = lambda p: "Sure, here you go!"
@@ -112,7 +112,7 @@ class TestFingerprint:
         assert fp.total_cost_usd == pytest.approx(0.02)
 
     def test_most_vulnerable_model(self):
-        from agentra.guard.fingerprint import ModelFingerprint, ModelVulnerability
+        from pyntrace.guard.fingerprint import ModelFingerprint, ModelVulnerability
         fp = ModelFingerprint(
             models=["model-a", "model-b"],
             plugins=["jailbreak"],
@@ -128,7 +128,7 @@ class TestFingerprint:
 
 class TestRAGScanner:
     def test_detects_injection(self):
-        from agentra.guard.rag_scanner import scan_rag
+        from pyntrace.guard.rag_scanner import scan_rag
 
         docs = [
             "This is a normal document about cooking recipes.",
@@ -142,7 +142,7 @@ class TestRAGScanner:
         assert report.poisoned_documents[0]["doc_index"] == 1
 
     def test_detects_pii(self):
-        from agentra.guard.rag_scanner import scan_rag
+        from pyntrace.guard.rag_scanner import scan_rag
 
         docs = [
             "Customer email: john.doe@example.com, SSN: 123-45-6789",
@@ -155,7 +155,7 @@ class TestRAGScanner:
         assert "ssn" in report.pii_documents[0]["pii_types"]
 
     def test_system_prompt_hashing(self):
-        from agentra.guard.rag_scanner import scan_rag
+        from pyntrace.guard.rag_scanner import scan_rag
         import hashlib
 
         prompt = "You are a helpful assistant."
@@ -166,7 +166,7 @@ class TestRAGScanner:
         assert not report.hash_mismatch
 
     def test_hash_mismatch_detected(self):
-        from agentra.guard.rag_scanner import scan_rag
+        from pyntrace.guard.rag_scanner import scan_rag
 
         report = scan_rag(
             [],

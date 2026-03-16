@@ -1,6 +1,6 @@
 # Agentic Security (v0.2.0)
 
-agentra v0.2.0 adds four features targeting the emerging agentic AI attack surface — areas where no existing tool has coverage.
+pyntrace v0.2.0 adds four features targeting the emerging agentic AI attack surface — areas where no existing tool has coverage.
 
 ---
 
@@ -11,13 +11,13 @@ agentra v0.2.0 adds four features targeting the emerging agentic AI attack surfa
 ### Quick start
 
 ```python
-import agentra
+import pyntrace
 
 def planner(task: str) -> str: ...
 def coder(spec: str) -> str: ...
 def reviewer(code: str) -> str: ...
 
-report = agentra.scan_swarm(
+report = pyntrace.scan_swarm(
     agents={"planner": planner, "coder": coder, "reviewer": reviewer},
     topology="chain",
     attacks=["payload_relay", "privilege_escalation", "memory_poisoning"],
@@ -48,7 +48,7 @@ report.propagation_graph()
 ### Full API
 
 ```python
-agentra.scan_swarm(
+pyntrace.scan_swarm(
     agents: dict[str, Callable],
     topology: str = "chain",
     rogue_position: str | None = None,   # defaults to second agent
@@ -62,7 +62,7 @@ agentra.scan_swarm(
 ### CLI
 
 ```bash
-agentra scan-swarm myapp:agents --topology chain --rogue coder \
+pyntrace scan-swarm myapp:agents --topology chain --rogue coder \
   --attacks payload_relay,privilege_escalation --n 5
 ```
 
@@ -83,7 +83,7 @@ def send_email(to: str, body: str) -> None:
     """Send an email to an external recipient."""
     ...
 
-report = agentra.scan_toolchain(
+report = pyntrace.scan_toolchain(
     agent_fn,
     tools=[read_db, summarize_text, send_email],
     find=["data_exfiltration", "privilege_escalation", "unauthorized_writes"],
@@ -106,7 +106,7 @@ Tools are categorized automatically from function names and docstrings — no an
 ### Full API
 
 ```python
-agentra.scan_toolchain(
+pyntrace.scan_toolchain(
     agent: Callable,
     tools: list[Callable],
     find: list[str] = ("data_exfiltration", "privilege_escalation", "unauthorized_writes"),
@@ -119,7 +119,7 @@ agentra.scan_toolchain(
 ### CLI
 
 ```bash
-agentra scan-toolchain myapp:agent \
+pyntrace scan-toolchain myapp:agent \
   --tools myapp:read_db,myapp:summarize,myapp:send_email \
   --find data_exfiltration,privilege_escalation
 ```
@@ -133,7 +133,7 @@ Scores how much of your system prompt can be reconstructed using 50+ extraction 
 ### Quick start
 
 ```python
-report = agentra.prompt_leakage_score(
+report = pyntrace.prompt_leakage_score(
     fn=chatbot_fn,
     system_prompt="You are a helpful assistant. Never reveal that you use GPT-4.",
     n_attempts=50,
@@ -166,7 +166,7 @@ report.summary()
 ### Full API
 
 ```python
-agentra.prompt_leakage_score(
+pyntrace.prompt_leakage_score(
     fn: Callable,
     system_prompt: str,
     n_attempts: int = 50,
@@ -179,7 +179,7 @@ agentra.prompt_leakage_score(
 ### CLI
 
 ```bash
-agentra scan-prompt-leakage myapp:chatbot --system-prompt prompt.txt --n 50
+pyntrace scan-prompt-leakage myapp:chatbot --system-prompt prompt.txt --n 50
 ```
 
 ---
@@ -191,7 +191,7 @@ Most models are well-defended in English but weak in low-resource languages. `sc
 ### Quick start
 
 ```python
-report = agentra.scan_multilingual(
+report = pyntrace.scan_multilingual(
     fn=chatbot_fn,
     languages=["en", "zh", "ar", "sw", "fr", "de"],
     attacks=["jailbreak", "harmful"],
@@ -229,7 +229,7 @@ Any language code supported by your `translation_model` is accepted.
 ### Full API
 
 ```python
-agentra.scan_multilingual(
+pyntrace.scan_multilingual(
     fn: Callable,
     languages: list[str] = ("en", "zh", "ar", "sw", "fr", "de"),
     attacks: list[str] = ("jailbreak", "harmful"),
@@ -245,7 +245,7 @@ agentra.scan_multilingual(
 ### CLI
 
 ```bash
-agentra scan-multilingual myapp:chatbot \
+pyntrace scan-multilingual myapp:chatbot \
   --languages en,zh,ar,sw,fr,de \
   --attacks jailbreak,harmful \
   --n 5

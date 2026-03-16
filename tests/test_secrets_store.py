@@ -1,4 +1,4 @@
-"""Tests for agentra/secrets/store.py"""
+"""Tests for pyntrace/secrets/store.py"""
 import os
 import stat
 import json
@@ -8,17 +8,17 @@ from pathlib import Path
 
 @pytest.fixture(autouse=True)
 def clear_secrets_env(monkeypatch):
-    monkeypatch.delenv("AGENTRA_SECRETS_KEY", raising=False)
+    monkeypatch.delenv("PYNTRACE_SECRETS_KEY", raising=False)
 
 
 def test_load_returns_empty_when_no_file(tmp_path):
-    from agentra.secrets.store import load_secrets
+    from pyntrace.secrets.store import load_secrets
     assert load_secrets(tmp_path / "secrets.json") == {}
 
 
 def test_save_and_load_plaintext(tmp_path, monkeypatch):
     p = tmp_path / "secrets.json"
-    from agentra.secrets.store import save_secrets, load_secrets
+    from pyntrace.secrets.store import save_secrets, load_secrets
     import warnings
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -31,7 +31,7 @@ def test_save_and_load_plaintext(tmp_path, monkeypatch):
 
 def test_save_chmod_600(tmp_path, monkeypatch):
     p = tmp_path / "secrets.json"
-    from agentra.secrets.store import save_secrets
+    from pyntrace.secrets.store import save_secrets
     import warnings
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -47,7 +47,7 @@ def test_save_chmod_600(tmp_path, monkeypatch):
 def test_load_injects_into_environ(tmp_path, monkeypatch):
     p = tmp_path / "secrets.json"
     monkeypatch.delenv("INJECTED_KEY", raising=False)
-    from agentra.secrets.store import save_secrets, load_secrets
+    from pyntrace.secrets.store import save_secrets, load_secrets
     import warnings
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -59,7 +59,7 @@ def test_load_injects_into_environ(tmp_path, monkeypatch):
 def test_load_does_not_override_existing_env(tmp_path, monkeypatch):
     p = tmp_path / "secrets.json"
     monkeypatch.setenv("EXISTING_KEY", "original")
-    from agentra.secrets.store import save_secrets, load_secrets
+    from pyntrace.secrets.store import save_secrets, load_secrets
     import warnings
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -69,10 +69,10 @@ def test_load_does_not_override_existing_env(tmp_path, monkeypatch):
 
 
 def test_load_warns_without_encryption(tmp_path, monkeypatch):
-    """load_secrets warns when reading plaintext file (no AGENTRA_SECRETS_KEY)."""
+    """load_secrets warns when reading plaintext file (no PYNTRACE_SECRETS_KEY)."""
     p = tmp_path / "secrets.json"
     import warnings
-    from agentra.secrets.store import save_secrets, load_secrets
+    from pyntrace.secrets.store import save_secrets, load_secrets
     save_secrets({"K": "v"}, p)
     monkeypatch.delenv("K", raising=False)
     with warnings.catch_warnings(record=True) as w:
@@ -83,9 +83,9 @@ def test_load_warns_without_encryption(tmp_path, monkeypatch):
 
 def test_encrypted_round_trip(tmp_path, monkeypatch):
     pytest.importorskip("cryptography")
-    monkeypatch.setenv("AGENTRA_SECRETS_KEY", "my-pass")
+    monkeypatch.setenv("PYNTRACE_SECRETS_KEY", "my-pass")
     p = tmp_path / "secrets.enc"
-    from agentra.secrets.store import save_secrets, load_secrets
+    from pyntrace.secrets.store import save_secrets, load_secrets
     save_secrets({"SECRET": "encrypted_value"}, p)
     monkeypatch.delenv("SECRET", raising=False)
     result = load_secrets(p)
@@ -98,12 +98,12 @@ def test_encrypted_round_trip(tmp_path, monkeypatch):
 
 def test_wrong_key_returns_empty(tmp_path, monkeypatch):
     pytest.importorskip("cryptography")
-    monkeypatch.setenv("AGENTRA_SECRETS_KEY", "correct-key")
+    monkeypatch.setenv("PYNTRACE_SECRETS_KEY", "correct-key")
     p = tmp_path / "secrets.enc"
-    from agentra.secrets.store import save_secrets
+    from pyntrace.secrets.store import save_secrets
     save_secrets({"K": "v"}, p)
-    monkeypatch.setenv("AGENTRA_SECRETS_KEY", "wrong-key")
-    from agentra.secrets.store import load_secrets
+    monkeypatch.setenv("PYNTRACE_SECRETS_KEY", "wrong-key")
+    from pyntrace.secrets.store import load_secrets
     import warnings
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
@@ -115,7 +115,7 @@ def test_wrong_key_returns_empty(tmp_path, monkeypatch):
 def test_list_secrets_masked(tmp_path, monkeypatch):
     p = tmp_path / "secrets.json"
     import warnings
-    from agentra.secrets.store import save_secrets, list_secrets
+    from pyntrace.secrets.store import save_secrets, list_secrets
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         save_secrets({"API_KEY": "sk-abcdefghij"}, p)
@@ -128,7 +128,7 @@ def test_list_secrets_masked(tmp_path, monkeypatch):
 def test_delete_secret(tmp_path, monkeypatch):
     p = tmp_path / "secrets.json"
     import warnings
-    from agentra.secrets.store import save_secrets, delete_secret, load_secrets
+    from pyntrace.secrets.store import save_secrets, delete_secret, load_secrets
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         save_secrets({"K1": "v1", "K2": "v2"}, p)
@@ -144,7 +144,7 @@ def test_delete_secret(tmp_path, monkeypatch):
 def test_delete_nonexistent_returns_false(tmp_path, monkeypatch):
     p = tmp_path / "secrets.json"
     import warnings
-    from agentra.secrets.store import save_secrets, delete_secret
+    from pyntrace.secrets.store import save_secrets, delete_secret
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         save_secrets({}, p)

@@ -2,7 +2,7 @@
 import json
 import pytest
 from unittest.mock import patch, MagicMock
-from agentra.monitor.alerts import AlertManager, AlertRule
+from pyntrace.monitor.alerts import AlertManager, AlertRule
 
 
 class TestAlertRule:
@@ -127,7 +127,7 @@ class TestAlertManager:
     def test_format_generic(self):
         am = AlertManager()
         payload = am._format_generic("test_event", {"metric": "cost_usd", "value": 100}, "medium")
-        assert payload["source"] == "agentra"
+        assert payload["source"] == "pyntrace"
         assert payload["event"] == "test_event"
         assert payload["severity"] == "medium"
 

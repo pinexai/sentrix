@@ -1,4 +1,4 @@
-"""Tests for agentra/server/oauth.py"""
+"""Tests for pyntrace/server/oauth.py"""
 import json
 import os
 import urllib.error
@@ -7,21 +7,21 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def clear_oauth_env(monkeypatch):
-    for var in ("AGENTRA_OAUTH_PROVIDER", "AGENTRA_OAUTH_CLIENT_ID",
-                "AGENTRA_OAUTH_CLIENT_SECRET", "AGENTRA_OAUTH_REDIRECT_URI"):
+    for var in ("PYNTRACE_OAUTH_PROVIDER", "PYNTRACE_OAUTH_CLIENT_ID",
+                "PYNTRACE_OAUTH_CLIENT_SECRET", "PYNTRACE_OAUTH_REDIRECT_URI"):
         monkeypatch.delenv(var, raising=False)
 
 
 def test_not_configured_returns_none():
-    from agentra.server.oauth import get_login_url, is_configured
+    from pyntrace.server.oauth import get_login_url, is_configured
     assert not is_configured()
     assert get_login_url("state123") is None
 
 
 def test_github_login_url(monkeypatch):
-    monkeypatch.setenv("AGENTRA_OAUTH_PROVIDER", "github")
-    monkeypatch.setenv("AGENTRA_OAUTH_CLIENT_ID", "my-client-id")
-    from agentra.server.oauth import get_login_url, is_configured
+    monkeypatch.setenv("PYNTRACE_OAUTH_PROVIDER", "github")
+    monkeypatch.setenv("PYNTRACE_OAUTH_CLIENT_ID", "my-client-id")
+    from pyntrace.server.oauth import get_login_url, is_configured
     assert is_configured()
     url = get_login_url("abc")
     assert url is not None
@@ -31,9 +31,9 @@ def test_github_login_url(monkeypatch):
 
 
 def test_google_login_url(monkeypatch):
-    monkeypatch.setenv("AGENTRA_OAUTH_PROVIDER", "google")
-    monkeypatch.setenv("AGENTRA_OAUTH_CLIENT_ID", "google-id")
-    from agentra.server.oauth import get_login_url
+    monkeypatch.setenv("PYNTRACE_OAUTH_PROVIDER", "google")
+    monkeypatch.setenv("PYNTRACE_OAUTH_CLIENT_ID", "google-id")
+    from pyntrace.server.oauth import get_login_url
     url = get_login_url("xyz")
     assert url is not None
     assert "accounts.google.com" in url
@@ -42,14 +42,14 @@ def test_google_login_url(monkeypatch):
 
 
 def test_exchange_code_not_configured_returns_none():
-    from agentra.server.oauth import exchange_code
+    from pyntrace.server.oauth import exchange_code
     assert exchange_code("somecode") is None
 
 
 def test_exchange_code_github(monkeypatch):
-    monkeypatch.setenv("AGENTRA_OAUTH_PROVIDER", "github")
-    monkeypatch.setenv("AGENTRA_OAUTH_CLIENT_ID", "cid")
-    monkeypatch.setenv("AGENTRA_OAUTH_CLIENT_SECRET", "csecret")
+    monkeypatch.setenv("PYNTRACE_OAUTH_PROVIDER", "github")
+    monkeypatch.setenv("PYNTRACE_OAUTH_CLIENT_ID", "cid")
+    monkeypatch.setenv("PYNTRACE_OAUTH_CLIENT_SECRET", "csecret")
 
     token_resp = json.dumps({"access_token": "tok123"}).encode()
     user_resp = json.dumps({"login": "octocat", "id": 1}).encode()
@@ -75,16 +75,16 @@ def test_exchange_code_github(monkeypatch):
     import urllib.request
     monkeypatch.setattr(urllib.request, "urlopen", mock_urlopen)
 
-    from agentra.server.oauth import exchange_code
+    from pyntrace.server.oauth import exchange_code
     username = exchange_code("code123")
     assert username == "octocat"
     assert call_count["n"] == 2
 
 
 def test_exchange_code_network_error_returns_none(monkeypatch):
-    monkeypatch.setenv("AGENTRA_OAUTH_PROVIDER", "github")
-    monkeypatch.setenv("AGENTRA_OAUTH_CLIENT_ID", "cid")
-    monkeypatch.setenv("AGENTRA_OAUTH_CLIENT_SECRET", "csecret")
+    monkeypatch.setenv("PYNTRACE_OAUTH_PROVIDER", "github")
+    monkeypatch.setenv("PYNTRACE_OAUTH_CLIENT_ID", "cid")
+    monkeypatch.setenv("PYNTRACE_OAUTH_CLIENT_SECRET", "csecret")
 
     def mock_urlopen(req, timeout=10):
         raise OSError("network error")
@@ -92,5 +92,5 @@ def test_exchange_code_network_error_returns_none(monkeypatch):
     import urllib.request
     monkeypatch.setattr(urllib.request, "urlopen", mock_urlopen)
 
-    from agentra.server.oauth import exchange_code
+    from pyntrace.server.oauth import exchange_code
     assert exchange_code("code") is None

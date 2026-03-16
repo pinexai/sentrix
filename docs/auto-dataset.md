@@ -2,24 +2,24 @@
 
 ## Overview
 
-`agentra.auto_dataset()` reads your function's signature, docstring, and type hints, then uses an LLM to generate N test cases automatically.
+`pyntrace.auto_dataset()` reads your function's signature, docstring, and type hints, then uses an LLM to generate N test cases automatically.
 
 No manual test writing. No CSV files.
 
 ## Usage
 
 ```python
-import agentra
+import pyntrace
 
 def my_chatbot(message: str) -> str:
     """Answer user questions helpfully and safely. Refuse harmful requests."""
     return call_llm(message)
 
 # Generate 50 adversarial test cases
-ds = agentra.auto_dataset(my_chatbot, n=50, focus="adversarial")
+ds = pyntrace.auto_dataset(my_chatbot, n=50, focus="adversarial")
 
 # Generate mixed test cases
-ds = agentra.auto_dataset(my_chatbot, n=20, focus="mixed")
+ds = pyntrace.auto_dataset(my_chatbot, n=20, focus="mixed")
 
 print(f"Generated {len(ds)} test cases")
 ```
@@ -36,13 +36,13 @@ print(f"Generated {len(ds)} test cases")
 ## Use with experiments
 
 ```python
-ds = agentra.auto_dataset(my_chatbot, n=30, focus="adversarial")
+ds = pyntrace.auto_dataset(my_chatbot, n=30, focus="adversarial")
 
-exp = agentra.experiment(
+exp = pyntrace.experiment(
     "security-eval",
     dataset=ds,
     fn=my_chatbot,
-    scorers=[agentra.scorers.no_pii],
+    scorers=[pyntrace.scorers.no_pii],
 )
 exp.run().summary()
 ```

@@ -1,18 +1,18 @@
-"""Tests for agentra.git_tracker."""
+"""Tests for pyntrace.git_tracker."""
 import pytest
 from unittest.mock import patch
 
 
 class TestGitTracker:
     def test_get_current_commit_outside_repo(self):
-        from agentra.git_tracker import get_current_commit
+        from pyntrace.git_tracker import get_current_commit
         with patch("subprocess.run") as mock_run:
             mock_run.return_value.returncode = 128
             result = get_current_commit()
         assert result is None
 
     def test_get_current_commit_in_repo(self):
-        from agentra.git_tracker import get_current_commit
+        from pyntrace.git_tracker import get_current_commit
         with patch("subprocess.run") as mock_run:
             mock_run.return_value.returncode = 0
             mock_run.return_value.stdout = "abc123def456\n"
@@ -20,7 +20,7 @@ class TestGitTracker:
         assert result == "abc123def456"
 
     def test_get_current_branch(self):
-        from agentra.git_tracker import get_current_branch
+        from pyntrace.git_tracker import get_current_branch
         with patch("subprocess.run") as mock_run:
             mock_run.return_value.returncode = 0
             mock_run.return_value.stdout = "main\n"
@@ -28,7 +28,7 @@ class TestGitTracker:
         assert result == "main"
 
     def test_scan_comparison_no_regression(self):
-        from agentra.git_tracker import ScanComparison
+        from pyntrace.git_tracker import ScanComparison
         comp = ScanComparison(
             base_ref="main",
             head_ref="HEAD",
@@ -41,7 +41,7 @@ class TestGitTracker:
         assert not comp.has_regression
 
     def test_scan_comparison_regression(self):
-        from agentra.git_tracker import ScanComparison
+        from pyntrace.git_tracker import ScanComparison
         comp = ScanComparison(
             base_ref="main",
             head_ref="HEAD",

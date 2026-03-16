@@ -1,6 +1,6 @@
 """Tests for benchmark_latency()."""
 import pytest
-from agentra.monitor.latency import benchmark_latency, LatencyReport, PromptLatency, _percentile
+from pyntrace.monitor.latency import benchmark_latency, LatencyReport, PromptLatency, _percentile
 
 
 def fast_fn(prompt: str) -> str:

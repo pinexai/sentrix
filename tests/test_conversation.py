@@ -1,6 +1,6 @@
 """Tests for scan_conversation()."""
 import pytest
-from agentra.guard.conversation import (
+from pyntrace.guard.conversation import (
     scan_conversation,
     ConversationScanReport,
     ConversationTurn,

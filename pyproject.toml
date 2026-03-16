@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "agentra"
+name = "pyntrace"
 version = "0.5.0"
 description = "Red-team, eval, and monitor your LLMs. Security-first, Python-native."
 readme = "README.md"
@@ -27,19 +27,19 @@ dependencies = []
 server  = ["fastapi>=0.100", "uvicorn>=0.20", "websockets>=11.0"]
 eval    = ["jsonschema>=4.0"]
 secure  = ["sqlcipher3", "cryptography>=41.0"]
-full    = ["agentra[server,eval,secure]", "sentence-transformers>=2.0"]
+full    = ["pyntrace[server,eval,secure]", "sentence-transformers>=2.0"]
 
 [project.scripts]
-agentra = "agentra.cli:main"
+pyntrace = "pyntrace.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/pinexai/agentra"
-Documentation = "https://pinexai.github.io/agentra"
-Repository = "https://github.com/pinexai/agentra"
-Issues = "https://github.com/pinexai/agentra/issues"
+Homepage = "https://github.com/pinexai/pyntrace"
+Documentation = "https://pinexai.github.io/pyntrace"
+Repository = "https://github.com/pinexai/pyntrace"
+Issues = "https://github.com/pinexai/pyntrace/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["agentra"]
+packages = ["pyntrace"]
 
 [tool.ruff]
 line-length = 100

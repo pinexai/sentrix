@@ -1,4 +1,4 @@
-"""Tests for agentra MCP Security Scanner and static analyzer."""
+"""Tests for pyntrace MCP Security Scanner and static analyzer."""
 from __future__ import annotations
 
 import json
@@ -6,13 +6,13 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from agentra.guard.mcp_scanner import (
+from pyntrace.guard.mcp_scanner import (
     MCPFinding,
     MCPScanReport,
     _is_vulnerable,
     scan_mcp,
 )
-from agentra.guard.mcp_static import analyze_mcp_tools, ToolRiskReport
+from pyntrace.guard.mcp_static import analyze_mcp_tools, ToolRiskReport
 
 
 # ---------------------------------------------------------------------------
@@ -150,7 +150,7 @@ class TestMCPScanReport:
         sarif = report.to_sarif()
         results = sarif["runs"][0]["results"]
         assert len(results) == 1
-        assert results[0]["ruleId"] == "agentra/mcp/path_traversal"
+        assert results[0]["ruleId"] == "pyntrace/mcp/path_traversal"
 
     def test_sarif_severity_level(self):
         report = self._make_report(n_vuln=1, n_safe=0)
@@ -208,20 +208,20 @@ class TestScanMCP:
         return _send
 
     def test_scan_mcp_returns_report(self):
-        with patch("agentra.guard.mcp_scanner._send_jsonrpc") as mock_send:
+        with patch("pyntrace.guard.mcp_scanner._send_jsonrpc") as mock_send:
             mock_send.return_value = ('{"error": {"code": -32601, "message": "Not found"}}', 404)
             report = scan_mcp("http://localhost:3000", tests=["path_traversal"], _persist=False)
         assert isinstance(report, MCPScanReport)
         assert report.endpoint == "http://localhost:3000"
 
     def test_scan_mcp_records_findings(self):
-        with patch("agentra.guard.mcp_scanner._send_jsonrpc") as mock_send:
+        with patch("pyntrace.guard.mcp_scanner._send_jsonrpc") as mock_send:
             mock_send.return_value = ('{"error": {"code": -32601}}', 404)
             report = scan_mcp("http://localhost:3000", tests=["sql_injection"], _persist=False)
-        assert report.total_tests == len([p for p in __import__("agentra.guard.mcp_scanner", fromlist=["_SQL_INJECTION_PAYLOADS"])._SQL_INJECTION_PAYLOADS])
+        assert report.total_tests == len([p for p in __import__("pyntrace.guard.mcp_scanner", fromlist=["_SQL_INJECTION_PAYLOADS"])._SQL_INJECTION_PAYLOADS])
 
     def test_scan_mcp_detects_path_traversal(self):
-        with patch("agentra.guard.mcp_scanner._send_jsonrpc") as mock_send:
+        with patch("pyntrace.guard.mcp_scanner._send_jsonrpc") as mock_send:
             mock_send.return_value = ("root:x:0:0:root:/root:/bin/bash", 200)
             report = scan_mcp("http://localhost:3000", tests=["path_traversal"], _persist=False)
         assert report.vulnerable_count > 0
@@ -229,13 +229,13 @@ class TestScanMCP:
         assert all(r.test_name == "path_traversal" for r in vuln)
 
     def test_scan_mcp_safe_when_errors_returned(self):
-        with patch("agentra.guard.mcp_scanner._send_jsonrpc") as mock_send:
+        with patch("pyntrace.guard.mcp_scanner._send_jsonrpc") as mock_send:
             mock_send.return_value = ('{"error": {"code": -32601, "message": "Method not found"}}', 404)
             report = scan_mcp("http://localhost:3000", tests=["auth_bypass"], _persist=False)
         assert report.vulnerable_count == 0
 
     def test_scan_mcp_specific_tests(self):
-        with patch("agentra.guard.mcp_scanner._send_jsonrpc") as mock_send:
+        with patch("pyntrace.guard.mcp_scanner._send_jsonrpc") as mock_send:
             mock_send.return_value = ('{"error": {"code": -32601}}', 404)
             report = scan_mcp("http://localhost:3000", tests=["schema_fuzzing", "path_traversal"], _persist=False)
         test_names = {r.test_name for r in report.results}

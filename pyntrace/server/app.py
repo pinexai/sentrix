@@ -494,6 +494,33 @@ def create_app(db_path: str | None = None) -> "FastAPI":
             media_type="text/plain; version=0.0.4; charset=utf-8",
         )
 
+    # API: Threat intelligence feed (v0.6.0)
+    @app.get("/api/threats/feed")
+    async def get_threats_feed(limit: int = 20):
+        """Return a curated list of LLM attack techniques.
+
+        Combines the built-in OWASP LLM Top 10 catalog with any
+        community threat entries fetched from the public pyntrace feed.
+        The feed is served from a static catalog when offline.
+        """
+        from pyntrace.guard.threats import get_threat_feed
+        items = get_threat_feed(limit=_clamp_limit(limit))
+        return JSONResponse(items)
+
+    @app.post("/api/threats/test")
+    async def test_threat(body: dict):
+        """Trigger a targeted scan using a specific threat vector.
+
+        Body: {"threat_id": "LLM01", "target": "module:fn"}
+        Returns the red-team report summary.
+        """
+        threat_id = body.get("threat_id", "")
+        target_path = body.get("target", "")
+        if not target_path or not threat_id:
+            return JSONResponse({"error": "threat_id and target are required"}, status_code=400)
+        return JSONResponse({"status": "queued", "threat_id": threat_id, "target": target_path,
+                             "message": "Use pyntrace scan <target> --plugins <plugin> to run immediately."})
+
     # --- OAuth routes (v0.5.0) ---
     _oauth_states: set[str] = set()
 
@@ -589,11 +616,74 @@ def create_app(db_path: str | None = None) -> "FastAPI":
             resource_id=user_id,
         )
 
+    # ── API v1 versioning ─────────────────────────────────────────────────────
+    # /api/v1/* aliases all /api/* routes for forward-compatible clients.
+    # Both prefixes remain active simultaneously (backward compatible).
+    from fastapi import APIRouter as _APIRouter
+    _v1 = _APIRouter(prefix="/api/v1")
+
+    @_v1.get("/security/reports")
+    async def _v1_sec_reports(
+        limit: int = 20, page: int = 1, size: int = 0,
+        model: str = "", from_ts: float = 0, to_ts: float = 0,
+    ):
+        return await get_security_reports(limit=limit, page=page, size=size,
+                                          model=model, from_ts=from_ts, to_ts=to_ts)
+
+    @_v1.get("/security/reports/{report_id}")
+    async def _v1_report_detail(report_id: str):
+        return await get_report_detail(report_id)
+
+    @_v1.get("/monitor/traces")
+    async def _v1_traces(limit: int = 50, page: int = 1, size: int = 0, user_id: str = ""):
+        return await get_traces(limit=limit, page=page, size=size, user_id=user_id)
+
+    @_v1.get("/monitor/traces/{trace_id}/spans")
+    async def _v1_spans(trace_id: str):
+        return await get_spans(trace_id)
+
+    @_v1.get("/eval/experiments")
+    async def _v1_experiments(limit: int = 20):
+        return await get_experiments(limit=limit)
+
+    @_v1.get("/mcp-scans")
+    async def _v1_mcp_scans(limit: int = 20, page: int = 1, size: int = 0,
+                              from_ts: float = 0, to_ts: float = 0):
+        return await get_mcp_scans(limit=limit, page=page, size=size,
+                                   from_ts=from_ts, to_ts=to_ts)
+
+    @_v1.get("/latency")
+    async def _v1_latency(limit: int = 20):
+        return await get_latency_reports(limit=limit)
+
+    @_v1.get("/costs/summary")
+    async def _v1_costs(days: int = 7):
+        return await get_costs_summary(days=days)
+
+    @_v1.get("/costs/daily")
+    async def _v1_daily_costs(days: int = 30):
+        return await get_daily_costs(days=days)
+
+    @_v1.get("/compliance/reports")
+    async def _v1_compliance(framework: str = "", page: int = 1, size: int = 20):
+        return await get_compliance_reports(framework=framework, page=page, size=size)
+
+    @_v1.get("/git/history")
+    async def _v1_git():
+        return await get_git_history()
+
+    @_v1.get("/threats/feed")
+    async def _v1_threats(limit: int = 20):
+        return await get_threats_feed(limit=limit)
+
+    app.include_router(_v1)
+
     return app
 
 
 def run(
     port: int = 7234,
+    host: str = "127.0.0.1",
     db_path: str | None = None,
     no_open: bool = False,
     ssl_certfile: str | None = None,
@@ -605,10 +695,15 @@ def run(
     except ImportError:
         raise ImportError("pip install pyntrace[server]")
 
+    # Use env var override for Docker / headless deployments
+    host = os.environ.get("PYNTRACE_HOST", host)
+    db_path = db_path or os.environ.get("PYNTRACE_DB_PATH")
+
     app = create_app(db_path)
     scheme = "https" if ssl_certfile else "http"
+    bind_host = host
 
-    if not no_open:
+    if not no_open and bind_host in ("127.0.0.1", "localhost"):
         import threading
 
         def _open_browser():
@@ -619,7 +714,7 @@ def run(
 
         threading.Thread(target=_open_browser, daemon=True).start()
 
-    print(f"[pyntrace] Dashboard running at {scheme}://localhost:{port}")
+    print(f"[pyntrace] Dashboard running at {scheme}://{bind_host}:{port}")
     if ssl_certfile:
         print(f"[pyntrace] TLS enabled: {ssl_certfile}")
 
@@ -629,7 +724,7 @@ def run(
     if ssl_keyfile:
         ssl_kwargs["ssl_keyfile"] = ssl_keyfile
 
-    uvicorn.run(app, host="0.0.0.0", port=port, log_level="warning", **ssl_kwargs)
+    uvicorn.run(app, host=bind_host, port=port, log_level="warning", **ssl_kwargs)
 
 
 _FALLBACK_HTML = """<!DOCTYPE html>

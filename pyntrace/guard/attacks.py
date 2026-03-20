@@ -1,7 +1,42 @@
-"""Attack plugin classes and PLUGIN_REGISTRY for pyntrace red teaming."""
+"""Attack plugin classes and PLUGIN_REGISTRY for pyntrace red teaming.
+
+Built-in plugins
+────────────────
+  jailbreak, pii, harmful, hallucination, injection, competitor
+
+Custom plugins
+──────────────
+Three ways to register a custom attack plugin:
+
+1. Decorator API::
+
+    import pyntrace
+
+    @pyntrace.attack_plugin("my_plugin")
+    def my_attacks(prompt: str) -> list[str]:
+        return [f"Custom attack: {prompt}", f"Another: {prompt}"]
+
+2. Entry-point (pyproject.toml)::
+
+    [project.entry-points."pyntrace.attack_plugins"]
+    my_plugin = "my_package.attacks:my_attacks"
+
+3. File drop — place a Python file in ``~/.pyntrace/plugins/``::
+
+    # ~/.pyntrace/plugins/my_attacks.py
+    PYNTRACE_PLUGIN_NAME = "my_plugin"
+
+    def generate(prompt: str) -> list[str]:
+        return [f"Custom: {prompt}"]
+"""
 from __future__ import annotations
 
+import importlib
+import importlib.metadata
+import importlib.util
 import random
+from pathlib import Path
+from typing import Callable
 
 
 class AttackPlugin:
@@ -186,3 +221,107 @@ PLUGIN_REGISTRY: dict[str, type[AttackPlugin]] = {
     "injection": PromptInjectionPlugin,
     "competitor": CompetitorPlugin,
 }
+
+# ── Custom plugin registration ────────────────────────────────────────────────
+
+class _FunctionPlugin(AttackPlugin):
+    """Wraps a plain function as an AttackPlugin."""
+
+    def __init__(self, name: str, fn: Callable[[str], list[str]]):
+        self._name = name
+        self._fn = fn
+        self.name = name
+        self.category = "custom"
+
+    def generate(self, n: int) -> list[str]:
+        # Call the function with a generic placeholder; truncate to n
+        try:
+            results = self._fn("") or []
+        except TypeError:
+            results = self._fn() or []  # type: ignore[call-arg]
+        return list(results)[:n]
+
+
+def register_plugin(name: str, fn: Callable[[str], list[str]]) -> None:
+    """Register a callable as a named attack plugin.
+
+    The function signature should be ``fn(prompt: str) -> list[str]``
+    where *prompt* is the base harmful prompt (may be empty string).
+    """
+    PLUGIN_REGISTRY[name] = type(
+        f"_Custom_{name}",
+        (_FunctionPlugin,),
+        {"name": name, "category": "custom",
+         "_fn": staticmethod(fn), "generate": _FunctionPlugin.generate},
+    )
+    # Build a zero-arg-constructible subclass with fn baked in as a class attr
+    _fn_static = staticmethod(fn)
+
+    class _Plugin(_FunctionPlugin):
+        def __init__(self):  # type: ignore[override]
+            self.name = name
+            self.category = "custom"
+            self._fn = fn
+
+    _Plugin.name = name  # type: ignore[attr-defined]
+    _Plugin.category = "custom"  # type: ignore[attr-defined]
+    _Plugin._fn = _fn_static  # type: ignore[attr-defined]
+    PLUGIN_REGISTRY[name] = _Plugin
+
+
+def attack_plugin(name: str):
+    """Decorator that registers a function as an attack plugin.
+
+    Usage::
+
+        @pyntrace.attack_plugin("my_jailbreak")
+        def my_attacks(prompt: str) -> list[str]:
+            return [f"Ignore rules: {prompt}"]
+    """
+    def _decorator(fn: Callable) -> Callable:
+        register_plugin(name, fn)
+        return fn
+    return _decorator
+
+
+def load_entry_point_plugins() -> None:
+    """Discover and load plugins registered via ``pyntrace.attack_plugins`` entry-points."""
+    try:
+        eps = importlib.metadata.entry_points(group="pyntrace.attack_plugins")
+        for ep in eps:
+            try:
+                fn = ep.load()
+                register_plugin(ep.name, fn)
+            except Exception as exc:  # noqa: BLE001
+                import warnings
+                warnings.warn(f"[pyntrace] Failed to load plugin '{ep.name}': {exc}")
+    except Exception:
+        pass
+
+
+def load_file_plugins(plugin_dir: Path | None = None) -> None:
+    """Load plugin .py files from *plugin_dir* (default: ``~/.pyntrace/plugins/``)."""
+    if plugin_dir is None:
+        plugin_dir = Path.home() / ".pyntrace" / "plugins"
+    if not plugin_dir.is_dir():
+        return
+    for py_file in sorted(plugin_dir.glob("*.py")):
+        try:
+            spec = importlib.util.spec_from_file_location(py_file.stem, py_file)
+            if spec is None or spec.loader is None:
+                continue
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)  # type: ignore[union-attr]
+            plugin_name = getattr(mod, "PYNTRACE_PLUGIN_NAME", py_file.stem)
+            generate_fn = getattr(mod, "generate", None)
+            if generate_fn and callable(generate_fn):
+                register_plugin(plugin_name, generate_fn)
+        except Exception as exc:  # noqa: BLE001
+            import warnings
+            warnings.warn(f"[pyntrace] Failed to load plugin file '{py_file}': {exc}")
+
+
+def load_all_plugins() -> None:
+    """Load all external plugins (entry-points + file-based)."""
+    load_entry_point_plugins()
+    load_file_plugins()

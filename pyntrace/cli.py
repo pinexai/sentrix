@@ -61,6 +61,49 @@ def cmd_scan(args) -> None:
         report.save_junit(args.output_junit)
 
 
+def cmd_audit_model(args) -> None:
+    """pyntrace audit-model <path> [--format json|text] [--sarif FILE] [--output FILE]"""
+    from pyntrace.guard.model_audit import audit_model, audit_models
+
+    path = args.path
+    import os as _os
+    if _os.path.isdir(path):
+        reports = audit_models(path, recursive=not args.no_recursive)
+        total = sum(len(r.findings) for r in reports)
+        critical = sum(len(r.critical) for r in reports)
+        high = sum(len(r.high) for r in reports)
+        print(f"[pyntrace] Scanned {len(reports)} model file(s): {total} findings, "
+              f"{critical} CRITICAL, {high} HIGH")
+        if args.format == "json" or args.output:
+            data = [r.to_json() for r in reports]
+        else:
+            for r in reports:
+                r.summary()
+            return
+    else:
+        report = audit_model(path)
+        if args.format == "json" or args.output:
+            data = report.to_json()
+        else:
+            report.summary()
+            if args.sarif:
+                report.save_sarif(args.sarif)
+                print(f"[pyntrace] SARIF report saved to {args.sarif}")
+            if args.fail_on_critical and not report.safe:
+                raise SystemExit(1)
+            return
+
+    # JSON output path
+    if args.format == "json":
+        print(json.dumps(data, indent=2))
+    if args.output:
+        with open(args.output, "w") as f:
+            json.dump(data, f, indent=2)
+        print(f"[pyntrace] Report saved to {args.output}")
+
+    # SARIF only for single-file mode (handled above)
+
+
 def cmd_benchmark(args) -> None:
     """pyntrace benchmark module:fn --prompts prompts.txt [--n-runs 3]"""
     from pyntrace import init
@@ -415,6 +458,7 @@ def cmd_serve(args) -> None:
     from pyntrace.server.app import run
     run(
         port=args.port,
+        host=getattr(args, "host", "127.0.0.1"),
         db_path=args.db,
         no_open=args.no_open,
         ssl_certfile=getattr(args, "cert", None),
@@ -702,9 +746,24 @@ def main() -> None:
     p_conv.add_argument("--output", metavar="FILE", help="Save JSON report to file")
     p_conv.set_defaults(func=cmd_scan_conversation)
 
+    # audit-model
+    p_audit = sub.add_parser("audit-model", help="Scan a saved ML model file for security vulnerabilities")
+    p_audit.add_argument("path", metavar="PATH", help="Model file or directory to scan")
+    p_audit.add_argument("--format", choices=["text", "json"], default="text",
+                         help="Output format (default: text)")
+    p_audit.add_argument("--output", metavar="FILE", help="Save JSON report to file")
+    p_audit.add_argument("--sarif", metavar="FILE", help="Save SARIF report to file")
+    p_audit.add_argument("--fail-on-critical", action="store_true",
+                         help="Exit with code 1 if CRITICAL or HIGH findings exist")
+    p_audit.add_argument("--no-recursive", action="store_true",
+                         help="Don't recurse into subdirectories when scanning a directory")
+    p_audit.set_defaults(func=cmd_audit_model)
+
     # serve
     p_serve = sub.add_parser("serve", help="Start dashboard")
     p_serve.add_argument("--port", type=int, default=7234)
+    p_serve.add_argument("--host", default="127.0.0.1",
+                         help="Bind host (default: 127.0.0.1; use 0.0.0.0 for Docker/LAN)")
     p_serve.add_argument("--db", metavar="PATH")
     p_serve.add_argument("--no-open", action="store_true", dest="no_open")
     p_serve.add_argument("--cert", metavar="FILE", default=None,

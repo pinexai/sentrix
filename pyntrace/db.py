@@ -52,11 +52,63 @@ def get_conn(db_path: str | None = None) -> sqlite3.Connection:
 
 
 def init_db(db_path: str | None = None) -> None:
-    """Create all tables if they don't exist."""
+    """Create all tables + run any pending schema migrations."""
     conn = get_conn(db_path)
     with conn:
         conn.executescript(_SCHEMA)
+    _run_migrations(conn)
     conn.close()
+
+
+# ── Schema migration system ───────────────────────────────────────────────────
+# Each migration is a (version: int, description: str, sql: str) tuple.
+# Migrations run once in order; the current version is stored in user_version PRAGMA.
+# To add a migration: append to _MIGRATIONS with the next integer version.
+
+_MIGRATIONS: list[tuple[int, str, str]] = [
+    (1, "add conversation_scan_reports.error column", """
+        ALTER TABLE conversation_scan_reports ADD COLUMN error TEXT DEFAULT '';
+    """),
+    (2, "add red_team_reports.judge_model column", """
+        ALTER TABLE red_team_reports ADD COLUMN judge_model TEXT DEFAULT '';
+    """),
+    (3, "add traces.environment column", """
+        ALTER TABLE traces ADD COLUMN environment TEXT DEFAULT 'production';
+    """),
+    (4, "add llm_calls.request_id column for idempotency", """
+        ALTER TABLE llm_calls ADD COLUMN request_id TEXT DEFAULT '';
+    """),
+    (5, "add mcp_scan_reports.scan_duration_s column", """
+        ALTER TABLE mcp_scan_reports ADD COLUMN scan_duration_s REAL DEFAULT 0;
+    """),
+]
+
+
+def _run_migrations(conn: "sqlite3.Connection") -> None:
+    """Apply any pending migrations to *conn* in order."""
+    try:
+        current_version: int = conn.execute("PRAGMA user_version").fetchone()[0]
+    except Exception:
+        current_version = 0
+
+    pending = [(v, desc, sql) for v, desc, sql in _MIGRATIONS if v > current_version]
+    if not pending:
+        return
+
+    for version, description, sql in sorted(pending, key=lambda x: x[0]):
+        try:
+            with conn:
+                # ALTER TABLE statements can't run inside executescript transactions
+                for statement in sql.strip().split(";"):
+                    stmt = statement.strip()
+                    if stmt:
+                        conn.execute(stmt)
+                conn.execute(f"PRAGMA user_version = {version}")
+        except Exception as exc:
+            # Column already exists is fine (idempotent)
+            if "duplicate column name" not in str(exc).lower():
+                import warnings
+                warnings.warn(f"[pyntrace] Migration v{version} '{description}' failed: {exc}")
 
 
 def _q(sql: str, params: tuple = (), db_path: str | None = None) -> list:

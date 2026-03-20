@@ -1,0 +1,28 @@
+services:
+  pyntrace:
+    build: .
+    image: pyntrace:latest
+    container_name: pyntrace
+    restart: unless-stopped
+    ports:
+      - "7234:7234"
+    volumes:
+      - pyntrace_data:/data
+    environment:
+      # Optional API key — leave blank to disable auth
+      PYNTRACE_API_KEY: ""
+      # Bind on all interfaces inside the container
+      PYNTRACE_HOST: "0.0.0.0"
+      # Additional CORS origins (comma-separated)
+      PYNTRACE_CORS_ORIGINS: "http://localhost:7234"
+    healthcheck:
+      test: ["CMD", "python3", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:7234/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  pyntrace_data:
+    driver: local

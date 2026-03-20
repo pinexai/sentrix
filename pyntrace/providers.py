@@ -1,4 +1,4 @@
-"""Auto-detect and call LLM providers.
+"""Auto-detect and call LLM providers — with automatic retry and back-off.
 
 Supported provider prefixes
 ────────────────────────────
@@ -16,25 +16,92 @@ Supported provider prefixes
 from __future__ import annotations
 
 import os
+import time
+import random
 from typing import Any
 
 _OFFLINE: bool = False
 _LOCAL_JUDGE_MODEL: str = "llama3"
 _DEFAULT_JUDGE_MODEL: str = "gpt-4o-mini"
 
+# Retry configuration
+_MAX_RETRIES: int = 3
+_RETRY_BASE_DELAY_S: float = 1.0   # first retry waits ~1 s
+_RETRY_MAX_DELAY_S: float = 30.0   # cap at 30 s
+
 # Module-level client cache — avoids creating a new HTTP client per call
 _CLIENTS: dict[str, Any] = {}
+
+# Errors that are retryable (rate-limit / server errors)
+_RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
 
 def configure(
     offline: bool = False,
     local_judge_model: str = "llama3",
     judge_model: str = "gpt-4o-mini",
+    max_retries: int = 3,
+    retry_base_delay: float = 1.0,
 ) -> None:
-    global _OFFLINE, _LOCAL_JUDGE_MODEL, _DEFAULT_JUDGE_MODEL
+    global _OFFLINE, _LOCAL_JUDGE_MODEL, _DEFAULT_JUDGE_MODEL, _MAX_RETRIES, _RETRY_BASE_DELAY_S
     _OFFLINE = offline
     _LOCAL_JUDGE_MODEL = local_judge_model
     _DEFAULT_JUDGE_MODEL = judge_model
+    _MAX_RETRIES = max_retries
+    _RETRY_BASE_DELAY_S = retry_base_delay
+
+
+def _with_retry(fn, *args, **kwargs):
+    """Call *fn* with exponential back-off on retryable errors.
+
+    Retries on:
+    - HTTP 429 (rate limit)
+    - HTTP 5xx (server error)
+    - Network / timeout errors
+    """
+    last_exc: Exception | None = None
+    for attempt in range(_MAX_RETRIES + 1):
+        try:
+            return fn(*args, **kwargs)
+        except Exception as exc:
+            last_exc = exc
+            status = _extract_status_code(exc)
+            is_retryable = (
+                status in _RETRYABLE_STATUS_CODES
+                or _is_network_error(exc)
+            )
+            if not is_retryable or attempt == _MAX_RETRIES:
+                raise
+            delay = min(
+                _RETRY_BASE_DELAY_S * (2 ** attempt) + random.uniform(0, 0.5),
+                _RETRY_MAX_DELAY_S,
+            )
+            import warnings
+            warnings.warn(
+                f"[pyntrace] Provider error (attempt {attempt + 1}/{_MAX_RETRIES}), "
+                f"retrying in {delay:.1f}s: {exc}"
+            )
+            time.sleep(delay)
+    raise last_exc  # type: ignore[misc]
+
+
+def _extract_status_code(exc: Exception) -> int:
+    """Try to extract an HTTP status code from provider exception."""
+    for attr in ("status_code", "status", "http_status", "code"):
+        val = getattr(exc, attr, None)
+        if isinstance(val, int):
+            return val
+    # openai wraps status in response attribute
+    response = getattr(exc, "response", None)
+    if response is not None:
+        return getattr(response, "status_code", 0)
+    return 0
+
+
+def _is_network_error(exc: Exception) -> bool:
+    """Return True for connection-level errors worth retrying."""
+    name = type(exc).__name__
+    return any(kw in name for kw in ("Timeout", "Connection", "Network", "URLError"))
 
 
 def get_judge_model() -> str:
@@ -53,7 +120,15 @@ def call(
     Provider is selected by model name prefix. Explicit prefixes (``azure:``,
     ``bedrock:``, ``groq:``, etc.) take priority over the legacy name-based
     auto-detection so existing code is fully backward-compatible.
+
+    All calls are wrapped with automatic exponential back-off on rate-limit
+    (429) and server errors (5xx). Configure via :func:`configure`.
     """
+    return _with_retry(_call_raw, model, messages, system)
+
+
+def _call_raw(model: str, messages: list[dict], system: str) -> tuple[str, int, int]:
+    """Inner dispatch — no retry logic here."""
     if _OFFLINE and not model.startswith("ollama:"):
         return _call_ollama(model, messages, system)
 

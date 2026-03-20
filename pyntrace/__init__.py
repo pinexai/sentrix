@@ -32,6 +32,8 @@ from pyntrace.guard.multilingual import scan_multilingual, MultilingualReport
 from pyntrace.guard.mcp_scanner import scan_mcp, MCPScanReport
 from pyntrace.guard.mcp_static import analyze_mcp_tools, ToolRiskReport
 from pyntrace.guard.conversation import scan_conversation, ConversationScanReport
+from pyntrace.guard.model_audit import audit_model, audit_models, ModelAuditReport
+from pyntrace.guard.attacks import attack_plugin, register_plugin, load_all_plugins
 
 # Eval
 from pyntrace.eval.dataset import Dataset, DatasetItem

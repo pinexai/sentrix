@@ -65,7 +65,17 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "W"]
-ignore = ["E501", "E731", "F541", "F401", "F841", "E401"]
+ignore = [
+    "E501", "E731", "F541", "F401", "F841", "E401",
+    # S-series suppressions — intentional patterns in a security testing tool:
+    "S110",  # try-except-pass — used for optional dependency guards throughout
+    "S311",  # random — non-crypto random is intentional for attack fuzzing/sampling
+    "S603",  # subprocess — CLI tool needs subprocess, already audited
+    "S607",  # partial executable path — git/CLI tools called by name intentionally
+    "S310",  # urllib urlopen — HTTP client calls are intentional (webhooks, agents)
+    "S608",  # SQL string build — table names are hardcoded literals, not user input
+    "S104",  # bind all interfaces — Prometheus/Docker deployments need 0.0.0.0
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -77,8 +87,11 @@ python_functions = ["test_*"]
 targets = ["pyntrace"]
 skips = [
     "B101",  # assert_used — tests use assert
+    "B110",  # try_except_pass — optional dependency guards throughout
     "B311",  # random — non-crypto use is intentional for attack fuzzing
+    "B310",  # urllib_urlopen — HTTP client calls are intentional
     "B404",  # subprocess — CLI needs subprocess
     "B603",  # subprocess_without_shell_equals_true — explicit subprocess calls
     "B607",  # start_process_with_partial_path — CLI tools by name
+    "B608",  # hardcoded_sql_expressions — table names are internal literals
 ]
